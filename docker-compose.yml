@@ -14,15 +14,44 @@ services:
     labels:
       com.blacklabelops.description: "Jenkins Continuous Integration System"
       com.blacklabelops.service: "jenkins-master"
-
+  # Global volume container
+  volumes:
+    #- /var/log
+    #- /jenkins
+    image: blacklabelops/centos
+    container_name: jenkins_data
+    volumes:
+      # Logging volumes
+      - /var/log
+      # Jenkins volume
+      - /jenkins
+    command: chown -R 1000:1000 /var/log /jenkins
+    labels:
+      com.blacklabelops.description: "Jenkins Docker Data Container"
+      com.blacklabelops.service: "volumes"
+      com.blacklabelops.applications: "centos jenkins-user"
   # Jenkins Slave
   slave:
-    image: ootaken/swarm-selenium
+    image: blacklabelops/swarm-jdk8
     links:
       - jenkins:jenkins
+      - hub
     env_file:
       - jenkins-slave.env
     labels:
       com.blacklabelops.description: "Jenkins Swarm JDK-8 Slave"
       com.blacklabelops.service: "slave"
       com.blacklabelops.applications: "java maven gradle"
+
+  hub:
+    image: selenium/hub
+    ports:
+      - "4444:4444"
+  firefox:
+    image: selenium/node-firefox
+    links:
+      - hub
+  chrome:
+    image: selenium/node-chrome
+    links:
+      - hub
